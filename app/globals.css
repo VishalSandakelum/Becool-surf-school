@@ -1,0 +1,1523 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* =========================================================================
+ * Brand @font-face declarations
+ *
+ * Why these live here (not just in the per-page bundles):
+ *   home.css and services.css declare these fonts with relative `../fonts/`
+ *   URLs that resolve correctly from inside /css/. The detail-page CSS
+ *   bundles (imported from the LiteSpeed-combined WP cache) DON'T include
+ *   the @font-face declarations for the brand fonts, so the "Be Cool" logo
+ *   in the header falls back to a default browser font.
+ *
+ *   By declaring them globally we guarantee the logo renders in its custom
+ *   typography on every route, regardless of which per-page CSS loads.
+ * ========================================================================= */
+@font-face {
+  font-family: "JOLLY JINGLE";
+  font-display: swap;
+  src: url("/fonts/JollyJingle.ttf") format("truetype");
+}
+@font-face {
+  font-family: "FUTURA MEDIUM";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/FuturaCyrillicMedium.ttf") format("truetype");
+}
+@font-face {
+  font-family: "futura light";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/FuturaCyrillicLight-1.ttf") format("truetype");
+}
+
+/* =========================================================================
+ * SURF & STAY PACKAGES — 2-column row width override
+ *
+ * Why this override exists:
+ *   The new 2-card row inherits the same `elementor-element-41ff9ba` row
+ *   class and `elementor-element-026425f` card class as the existing 3-card
+ *   row, which gives us the dark card visual treatment for free. But that
+ *   per-page CSS sets `--width:100%` on every card individually — which
+ *   works for the existing 3-card layout (each of those cards also has its
+ *   own per-id width rule that scales it down to ~33%), but breaks here
+ *   because both of our cards reuse the LEVEL 1 id and so get 100%.
+ *
+ *   We tag our row with `bcss-stay-cards-row`, then force a clean 2-column
+ *   layout that wins on specificity (single extra class + !important on
+ *   the values that conflict with per-page rules).
+ * ========================================================================= */
+.bcss-stay-cards-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 30px !important;
+  max-width: 1200px;
+  /* Top: breathing room under the SURF & STAY PACKAGES title.
+     Bottom: keeps the dark cards from butting up against the footer's
+     "ABOUT BECOOL" row. The existing 3-card row gets that gap from a
+     drone-overhead image that sits between it and the footer; our row
+     has nothing in between, so we add the spacing here directly. */
+  margin: 40px auto 80px !important;
+  padding: 0 20px !important;
+  box-sizing: border-box;
+}
+
+.bcss-stay-cards-row > .e-con.e-child {
+  flex: 0 1 calc(50% - 15px) !important;
+  min-width: 280px;
+  max-width: 540px;
+  box-sizing: border-box;
+  /* Constrain inner content so a long single-line blurb wraps inside the
+     card instead of stretching the card wider than its flex-basis. */
+  min-width: 0;
+}
+
+.bcss-stay-cards-row > .e-con.e-child > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .bcss-stay-cards-row > .e-con.e-child {
+    flex: 0 1 100% !important;
+    max-width: 100%;
+  }
+}
+
+/* =========================================================================
+ * HOME PAGE — "Surf in Weligama Bay" section — mobile column order swap
+ *
+ * The Elementor markup is a 2-column flex row:
+ *   .elementor-element-9d4055f (parent row)
+ *     ├── .elementor-element-5c5f58f  (left column — Sri Lanka map image)
+ *     └── .elementor-element-dbe5fed  (right column — heading + paragraph)
+ *
+ * On desktop the row reads naturally left→right. On mobile the row wraps
+ * (via `--flex-wrap-mobile: wrap` set by Elementor) and because the image
+ * is the first child it ends up on top, pushing the title and paragraph
+ * below a tall illustration. The user wants text to lead on mobile, with
+ * the map following underneath.
+ *
+ * Why we set `--order` (a CSS custom property) and not `order` directly:
+ *   Elementor's per-page CSS includes a rule on the e-con/e-flex children
+ *   that reads `order: var(--order)` with `--order: 0` as the default.
+ *   That selector binds `order` to the custom property, so a plain
+ *   `order: 1` declaration gets overridden because the var-based rule
+ *   keeps re-resolving to `0`. Setting the custom property itself feeds
+ *   the value through Elementor's own pipeline — no `!important` needed,
+ *   no fight with Elementor's framework rules.
+ * ========================================================================= */
+@media (max-width: 768px) {
+  .elementor-element-5c5f58f {
+    --order: 2;
+  }
+  .elementor-element-dbe5fed {
+    --order: 1;
+  }
+}
+
+/* =========================================================================
+ * HOME PAGE — "Choose Your Surf Experience" teaser block
+ *
+ * Lives between the welcome paragraphs and the LEVEL 1/2/3 pricing cards.
+ * Briefly previews the two product lines visitors can pick from on the
+ * /package page, without listing the full details. Clicking either card
+ * deep-links into /package at the matching anchor (#surf-packages or
+ * #surf-stay-packages — both already have scroll-margin-top set).
+ *
+ * Visual: dark-navy cards with an amber-bordered "Most Popular" featured
+ * card — same colour language as the LEVEL cards below, so the section
+ * reads as a natural lead-in rather than a separate visual area.
+ * ========================================================================= */
+
+.bcss-home-teaser {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 24px;
+  /* Body text inherits the site default sans-serif; section + card titles
+     pick up Oswald via their own rules below. */
+  font-family:
+    "Maven Pro",
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  box-sizing: border-box;
+}
+
+.bcss-home-teaser__head {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.bcss-home-teaser__eyebrow {
+  color: var(--bcss-pkg-teal, #38ada9);
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+/* Title matches the "LEARN TO SURF IN PARADISE WITH BE COOL SURF SCHOOL"
+   welcome heading higher up on the page: Oswald 400, ~3 px letter-spacing,
+   uppercase. Keeps the home page typographically consistent. */
+.bcss-home-teaser__title {
+  color: var(--bcss-pkg-navy, #0a1f3a);
+  font-family: "Oswald", sans-serif;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 14px;
+  line-height: 1.15;
+}
+
+.bcss-home-teaser__subtitle {
+  color: #4b5563;
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .bcss-home-teaser__title {
+    font-size: 24px;
+  }
+  .bcss-home-teaser__subtitle {
+    font-size: 14.5px;
+  }
+}
+
+.bcss-home-teaser__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+}
+
+@media (max-width: 760px) {
+  .bcss-home-teaser__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcss-home-teaser__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bcss-pkg-navy, #0a1f3a);
+  color: #fff;
+  border-radius: 18px;
+  padding: 36px 32px 30px;
+  text-decoration: none;
+  border: 2px solid transparent;
+  overflow: hidden;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+/* Soft teal radial glow in the bottom-right corner — adds depth without
+ * a separate decorative element. */
+.bcss-home-teaser__card::after {
+  content: "";
+  position: absolute;
+  right: -50px;
+  bottom: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(56, 173, 169, 0.22) 0%,
+    rgba(56, 173, 169, 0) 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.bcss-home-teaser__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 44px rgba(10, 31, 58, 0.22);
+}
+
+.bcss-home-teaser__card--featured {
+  border-color: var(--bcss-pkg-amber, #f6c343);
+  box-shadow:
+    0 12px 36px rgba(246, 195, 67, 0.18),
+    0 6px 20px rgba(10, 31, 58, 0.1);
+}
+
+.bcss-home-teaser__badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: var(--bcss-pkg-amber, #f6c343);
+  color: var(--bcss-pkg-navy, #0a1f3a);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.bcss-home-teaser__card-eyebrow {
+  color: var(--bcss-pkg-teal, #38ada9);
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.bcss-home-teaser__card-title {
+  color: #fff;
+  /* Same Oswald 400 / 0.1em as the section title — uniform feel across the
+     teaser. We bump weight a touch (500) so white text on dark navy keeps
+     enough optical weight; Oswald 400 on dark looks slightly thin. */
+  font-family: "Oswald", sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+  line-height: 1.15;
+  position: relative;
+  z-index: 1;
+}
+
+.bcss-home-teaser__card-blurb {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0 0 26px;
+  flex-grow: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.bcss-home-teaser__cta {
+  color: var(--bcss-pkg-amber, #f6c343);
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+  transition: color 180ms ease;
+}
+
+.bcss-home-teaser__cta span {
+  display: inline-block;
+  transition: transform 220ms ease;
+}
+
+.bcss-home-teaser__card:hover .bcss-home-teaser__cta {
+  color: #fff;
+}
+
+.bcss-home-teaser__card:hover .bcss-home-teaser__cta span {
+  transform: translateX(6px);
+}
+
+/* =========================================================================
+ * Redesigned SURF PACKAGES + SURF & STAY PACKAGES sections
+ *
+ * Bespoke cards built outside the Elementor class chain so the look is
+ * fully under our control: dark-navy cards on a light page background,
+ * teal eyebrow text, amber price chip + bullet markers, and a "Most
+ * Popular" featured card with an amber border for the Surf & Stay row.
+ *
+ * Layout: 4-card grid for Surf Packages on desktop (collapses to 2 then
+ * 1), 2-card grid for Surf & Stay (collapses to 1).
+ * ========================================================================= */
+
+:root {
+  --bcss-pkg-navy: #0a1f3a;
+  --bcss-pkg-navy-2: #0e2849;
+  --bcss-pkg-teal: #38ada9;
+  --bcss-pkg-amber: #f6c343;
+  --bcss-pkg-amber-2: #fbbf24;
+  --bcss-pkg-text-dim: rgba(255, 255, 255, 0.72);
+  --bcss-pkg-rule: rgba(255, 255, 255, 0.08);
+}
+
+.bcss-pkg-wrap {
+  max-width: 1280px;
+  margin: 60px auto;
+  padding: 0 24px;
+  font-family:
+    "Maven Pro",
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  box-sizing: border-box;
+}
+
+.bcss-pkg-section__head {
+  text-align: center;
+  margin-bottom: 44px;
+}
+
+.bcss-pkg-eyebrow {
+  color: var(--bcss-pkg-teal);
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+/* Section title — same Oswald 400 / 0.1em as the welcome heading
+   ("LEARN TO SURF IN PARADISE WITH BE COOL SURF SCHOOL"), so the
+   typographic voice stays unified across the page. */
+.bcss-pkg-title {
+  color: var(--bcss-pkg-navy);
+  font-family: "Oswald", sans-serif;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  line-height: 1.15;
+}
+
+/* Section subtitle — same body face as the original WP welcome paragraphs
+   ("Welcome to Be Cool Surf School…"), which is Roboto via Elementor's
+   global text-font-family variable. Anchoring all package-page paragraph
+   text to Roboto keeps the whole site's body voice consistent. */
+.bcss-pkg-subtitle {
+  color: #4b5563;
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .bcss-pkg-title {
+    font-size: 28px;
+  }
+  .bcss-pkg-subtitle {
+    font-size: 15px;
+  }
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────── */
+
+.bcss-pkg-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.bcss-pkg-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bcss-pkg-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bcss-pkg-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+}
+
+@media (max-width: 1100px) {
+  .bcss-pkg-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .bcss-pkg-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .bcss-pkg-grid--4,
+  .bcss-pkg-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+
+.bcss-pkg-card {
+  background: var(--bcss-pkg-navy);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 0 10px 30px rgba(10, 31, 58, 0.08);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.bcss-pkg-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(10, 31, 58, 0.16);
+}
+
+.bcss-pkg-card--featured {
+  border-color: var(--bcss-pkg-amber);
+  box-shadow:
+    0 12px 36px rgba(246, 195, 67, 0.18),
+    0 6px 20px rgba(10, 31, 58, 0.12);
+}
+
+.bcss-pkg-card__badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--bcss-pkg-amber);
+  color: var(--bcss-pkg-navy);
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.bcss-pkg-card__header {
+  padding: 30px 28px 26px;
+  background: linear-gradient(
+    180deg,
+    var(--bcss-pkg-navy-2) 0%,
+    var(--bcss-pkg-navy) 100%
+  );
+  border-bottom: 1px solid var(--bcss-pkg-rule);
+}
+
+.bcss-pkg-card__eyebrow {
+  color: var(--bcss-pkg-teal);
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+/* Card title — white on dark navy. Oswald 500 (a touch heavier than the
+   light backgrounds) keeps the text crisp against the gradient header. */
+.bcss-pkg-card__title {
+  color: #fff;
+  font-family: "Oswald", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+  line-height: 1.2;
+}
+
+.bcss-pkg-card__price {
+  display: inline-block;
+  background: var(--bcss-pkg-amber);
+  color: var(--bcss-pkg-navy);
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 7px 16px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.bcss-pkg-card__body {
+  padding: 24px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.bcss-pkg-card__blurb {
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--bcss-pkg-text-dim);
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0 0 20px;
+  border-left: 2px solid var(--bcss-pkg-amber);
+  padding-left: 14px;
+}
+
+.bcss-pkg-card__list {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  flex-grow: 1;
+}
+
+.bcss-pkg-card__list li {
+  position: relative;
+  padding-left: 30px;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 9px 0;
+}
+
+.bcss-pkg-card__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 18px;
+  height: 18px;
+  background: var(--bcss-pkg-amber);
+  border-radius: 50%;
+}
+
+.bcss-pkg-card__list li::after {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--bcss-pkg-navy);
+  text-align: center;
+  line-height: 18px;
+}
+
+.bcss-pkg-card__cta {
+  display: block;
+  text-align: center;
+  background: var(--bcss-pkg-navy);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 14px 16px;
+  border-radius: 999px;
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  margin-top: auto;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.bcss-pkg-card__cta:hover {
+  background: var(--bcss-pkg-amber);
+  color: var(--bcss-pkg-navy);
+  border-color: var(--bcss-pkg-amber);
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+ * "Which package is right for you?" comparison block
+ *
+ * Sits between the umbrella OUR PACKAGES intro and the SURF PACKAGES
+ * subsection. Two side-by-side info cards summarise the two product lines
+ * (drop-in surf lessons vs 7-night surf-and-stay camps) so visitors can
+ * pick the relevant section before scrolling through the detailed cards.
+ *
+ * Design intent: light cards (in contrast with the dark Elementor product
+ * cards below) so they read as a guide / wayfinding block rather than as
+ * yet another product card competing for attention. Smooth-scroll to the
+ * matching anchor when the CTA is clicked.
+ * ========================================================================= */
+.bcss-compare-wrap {
+  max-width: 1100px;
+  margin: 24px auto 48px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+.bcss-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 760px) {
+  .bcss-compare {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcss-compare__col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 26px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  font-family:
+    "Maven Pro",
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.bcss-compare__col:hover {
+  border-color: #38ada9;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.bcss-compare__title {
+  margin: 0 0 6px;
+  font-family: "Oswald", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: #0a3d62;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.bcss-compare__lead {
+  margin: 0 0 18px;
+  color: #475569;
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.bcss-compare__points {
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+  flex-grow: 1;
+}
+
+.bcss-compare__points li {
+  position: relative;
+  padding-left: 26px;
+  margin: 8px 0;
+  font-family: "Roboto", "Maven Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #1f2937;
+}
+
+.bcss-compare__points li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #38ada9;
+  font-weight: 700;
+}
+
+.bcss-compare__cta {
+  align-self: flex-start;
+  display: inline-block;
+  padding: 10px 22px;
+  background: #0a3d62;
+  color: #fff;
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition:
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.bcss-compare__cta:hover {
+  background: #0c5179;
+  transform: translateY(-1px);
+}
+
+/* Smooth scroll only on the anchor jump, not the whole document. We add
+   scroll-margin so the anchored section title isn't pinned right under
+   the sticky header when the user lands on it. */
+html {
+  scroll-behavior: smooth;
+}
+
+#surf-packages,
+#surf-stay-packages {
+  scroll-margin-top: 100px;
+}
+
+/* =========================================================================
+ * LEVEL 1 BEGINNER card — surfer-photo background
+ *
+ * The card's per-page CSS paints `background-color:#000`. We layer a
+ * background-image (the beginner-lesson surfer photo) on top, with a
+ * darken gradient overlay so the white headings/text/bullets stay
+ * readable against any bright spots in the photo.
+ *
+ * Selector scope:
+ *   - `.elementor-51` … so the rule sits inside the page wrapper context
+ *      and beats the per-page CSS specificity without `!important` games.
+ *   - `.elementor-element-41ff9ba:not(.bcss-stay-cards-row)` … restricts
+ *      the rule to the existing 3-card row only. Our new SURF & STAY
+ *      cards reuse the same `elementor-element-026425f` class to inherit
+ *      the dark visual treatment, so without this guard they'd pick up
+ *      the surfer photo too.
+ *   - `> .elementor-element.elementor-element-026425f` … LEVEL 1 BEGINNER
+ *      is the only card in that row using this id; LEVEL 2/3 use their
+ *      own ids and stay solid black.
+ * ========================================================================= */
+.elementor-51
+  .elementor-element-41ff9ba:not(.bcss-stay-cards-row)
+  > .elementor-element.elementor-element-026425f {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.62)),
+    url("/images/Begginer-Lesson-1-scaled.jpg") !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* =========================================================================
+ * Mobile menu dropdown — positioning fix
+ *
+ * Elementor's `.elementor-nav-menu--stretch` mode marks the dropdown as
+ *   `position: absolute; z-index: 9997`
+ * and originally relied on the WordPress frontend JS to compute `left`,
+ * `right`, and `width` based on the viewport. We removed that JS, so the
+ * dropdown defaults to content-width and sits anchored at the toggle's
+ * right edge — which on mobile pushes the right side of the menu off the
+ * viewport (items "Packa…", "Servi…", "Conta…" get clipped).
+ *
+ * Force the dropdown to span the full viewport width on tablet/mobile so
+ * every nav item stays on-screen and right-aligned text reads cleanly.
+ * Desktop is unaffected — the dropdown is hidden above 1023 px anyway by
+ * the existing `min-width: 1024px` rule below.
+ * ========================================================================= */
+@media (max-width: 1023px) {
+  .elementor-nav-menu--stretch
+    .elementor-nav-menu__container.elementor-nav-menu--dropdown,
+  .elementor-nav-menu--toggle
+    .elementor-nav-menu__container.elementor-nav-menu--dropdown {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+  }
+}
+
+/* =========================================================================
+ * Responsive overrides for the Elementor body content
+ *
+ * Why:
+ *   The original WP build was authored for desktop (≥1025 px) with 3-, 4-,
+ *   and 5-column rows. At narrower viewports those rows stay horizontal so
+ *   cards become unreadably narrow. We let the rows wrap.
+ *
+ * Strategy (minimal — defer everything else to Elementor's own styles):
+ *   - 1024 px+ : promote to "desktop" so the full nav appears at 1024.
+ *   - 768-1023 : wrap multi-column rows to 2 per row.
+ *   - <768     : wrap multi-column rows to 1 per row.
+ *
+ *   We do NOT touch padding, height, flex-grow, or margins — Elementor's
+ *   own per-breakpoint values should be respected so hero sections, cards
+ *   and section spacing stay pixel-identical to the original mobile design.
+ * ========================================================================= */
+
+/* ------------------------------------------------------------------------
+ * 1. LAPTOP & UP (≥1024 px) — full desktop nav, hide mobile-only Book Now
+ * ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  .elementor-nav-menu--dropdown-tablet .elementor-nav-menu--main {
+    display: block !important;
+  }
+  .elementor-nav-menu--dropdown-tablet .elementor-menu-toggle,
+  .elementor-nav-menu--dropdown-tablet .elementor-nav-menu--dropdown {
+    display: none !important;
+  }
+  .elementor .elementor-hidden-desktop {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------------
+ * 2. TABLET (768-1023 px) — multi-column rows wrap to 2 per row
+ * ------------------------------------------------------------------------ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  [data-elementor-type="wp-page"] .e-con.e-parent {
+    flex-wrap: wrap !important;
+  }
+  [data-elementor-type="wp-page"] .e-con.e-parent > .e-con.e-child {
+    flex-basis: 50% !important;
+    max-width: 50% !important;
+  }
+  /* Single-child rows take the full width (otherwise they'd cap at 50%) */
+  [data-elementor-type="wp-page"] .e-con.e-parent > .e-con.e-child:only-child {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ------------------------------------------------------------------------
+ * 3. MOBILE (<768 px) — multi-column rows wrap to 1 per row
+ * ------------------------------------------------------------------------ */
+@media (max-width: 767px) {
+  [data-elementor-type="wp-page"] .e-con.e-parent,
+  [data-elementor-type="footer"] .e-con.e-parent {
+    flex-wrap: wrap !important;
+  }
+  [data-elementor-type="wp-page"] .e-con.e-parent > .e-con.e-child,
+  [data-elementor-type="footer"] .e-con.e-parent > .e-con.e-child {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ------------------------------------------------------------------------
+ * 4. FOOTER on tablet — 2 cols instead of 4 cramped cols
+ * ------------------------------------------------------------------------ */
+@media (min-width: 481px) and (max-width: 1023px) {
+  [data-elementor-type="footer"] .e-con.e-parent {
+    flex-wrap: wrap !important;
+  }
+  [data-elementor-type="footer"] .e-con.e-parent > .e-con.e-child {
+    flex-basis: 50% !important;
+    max-width: 50% !important;
+  }
+}
+
+/* =========================================================================
+ * Native React components (contact form + Google reviews)
+ *
+ * These styles intentionally use a `bcss-` prefix so they don't collide with
+ * Elementor's own classes while we transition the rest of the site off the
+ * WordPress runtime. Colour palette mirrors the existing site:
+ *   #0a3d62  primary navy
+ *   #38ada9  accent teal
+ *   #f6b93b  highlight amber
+ * ========================================================================= */
+
+.bcss-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  font-family:
+    "Maven Pro",
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.bcss-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .bcss-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcss-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bcss-form-field--full {
+  width: 100%;
+}
+
+.bcss-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a3d62;
+  letter-spacing: 0.02em;
+}
+
+.bcss-contact-form input,
+.bcss-contact-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d6dde3;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 15px;
+  color: #0f172a;
+  font-family: inherit;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.bcss-contact-form input:focus,
+.bcss-contact-form textarea:focus {
+  outline: none;
+  border-color: #38ada9;
+  box-shadow: 0 0 0 3px rgba(56, 173, 169, 0.18);
+}
+
+.bcss-contact-form input:disabled,
+.bcss-contact-form textarea:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.bcss-contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.bcss-form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.bcss-form-error {
+  margin: 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.bcss-form-submit {
+  align-self: flex-start;
+  padding: 12px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #0a3d62;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.bcss-form-submit:hover:not(:disabled) {
+  background: #0c5179;
+  transform: translateY(-1px);
+}
+
+.bcss-form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bcss-form-success {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.bcss-form-success h3 {
+  margin: 0 0 8px;
+  color: #065f46;
+  font-size: 20px;
+}
+
+.bcss-form-success p {
+  margin: 0;
+  color: #047857;
+  font-size: 15px;
+}
+
+/* ── Reviews ──────────────────────────────────────────────────────────── */
+
+.bcss-reviews {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.bcss-reviews__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.bcss-reviews__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bcss-reviews__rating-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0a3d62;
+}
+
+.bcss-reviews__count {
+  color: #475569;
+  font-size: 14px;
+}
+
+.bcss-reviews__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.bcss-review {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bcss-review__head {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.bcss-review__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.bcss-review__avatar--initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a3d62;
+  color: #fff;
+  font-weight: 600;
+}
+
+.bcss-review__name {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.bcss-review__time {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.bcss-review__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.bcss-stars {
+  display: inline-flex;
+  gap: 1px;
+  font-size: 16px;
+  letter-spacing: -1px;
+}
+
+.bcss-star--on {
+  color: #f6b93b;
+}
+
+.bcss-star--off {
+  color: #cbd5e1;
+}
+
+/* ── Business location ────────────────────────────────────────────────── */
+
+.bcss-location {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 28px;
+  /* Fill the Elementor parent container instead of constraining to 1200px —
+     the parent already handles page-level width + centering so an inner
+     max-width here just makes the card look pinched compared to the form
+     and social-icons row above it. */
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  font-family:
+    "Maven Pro",
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  box-sizing: border-box;
+}
+
+@media (max-width: 860px) {
+  .bcss-location {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcss-location__map {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 320px;
+  background: #e2e8f0;
+}
+
+.bcss-location__map iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Small "view larger map" link tucked into the bottom-right of the map
+   tile. Mirrors the affordance Google Maps puts there by default; users
+   who want the full interactive experience can pop the map out into a
+   new tab. */
+.bcss-location__map-link {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a3d62;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  transition: background 150ms ease;
+}
+
+.bcss-location__map-link:hover {
+  background: #fff;
+}
+
+.bcss-location__info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 4px;
+}
+
+.bcss-location__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0a3d62;
+  letter-spacing: -0.01em;
+}
+
+.bcss-location__address {
+  margin: 0;
+  font-style: normal;
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.bcss-location__list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.bcss-location__row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.bcss-location__row dt {
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.bcss-location__row dd {
+  margin: 0;
+  color: #0f172a;
+}
+
+.bcss-location__row a {
+  color: #0a3d62;
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 150ms ease;
+}
+
+.bcss-location__row a:hover {
+  border-bottom-color: #0a3d62;
+}
+
+.bcss-location__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.bcss-location__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid #0a3d62;
+  color: #0a3d62;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.bcss-location__btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.bcss-location__btn--primary {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
+}
+
+.bcss-location__btn--primary:hover {
+  background: #1ebe5b;
+  border-color: #1ebe5b;
+  color: #fff;
+}
+
+/* =========================================================================
+ * SITE-WIDE BODY PARAGRAPH TYPOGRAPHY — match the home page
+ *
+ * The home page's WP-original body paragraphs (the "Welcome to Be Cool"
+ * intro, the "Surf in Weligama Bay" description, the feature-card blurbs)
+ * all share one distinctive style, applied via per-widget overrides:
+ *
+ *     font-family: "futura light", Sans-serif;
+ *     font-size: 16px;
+ *     font-weight: 500;
+ *     line-height: 25px;
+ *     letter-spacing: 1.6px;
+ *     color: #0C0000;
+ *
+ * On the other pages (services, package, about) most body paragraphs
+ * already inherit this style because the WP export carried equivalent
+ * per-widget rules over. But the 6 detail pages (beginner / intermediate /
+ * advanced / private / group / board-rent) share a single text-editor
+ * widget id — `af4feee` — that was authored with `Roboto, 400` per-widget
+ * styling. That's the main descriptive paragraph on each detail page, and
+ * it visibly differs from every other body paragraph on the site.
+ *
+ * Bringing those paragraphs onto the home page's body face is the most
+ * impactful single fix for cross-page consistency.
+ *
+ * Specificity / cascade note:
+ *   The detail-page CSS rule is
+ *     `.elementor-4308 .elementor-element.elementor-element-af4feee {…}`
+ *   at (0,3,0). Per-page CSS files load after this globals.css file in the
+ *   document, so on equal specificity their rule would still win. We use
+ *   `!important` on font-family alone to win without bumping specificity
+ *   and without disturbing the size/colour declarations.
+ *
+ * We deliberately do NOT touch the home page (its rules already say
+ * "futura light"), and we do NOT touch our `.bcss-*` custom sections —
+ * those use Roboto by design and their rules sit at higher specificity
+ * inside their own dedicated selectors.
+ * ========================================================================= */
+.elementor-4308 .elementor-element.elementor-element-af4feee,
+.elementor-4223 .elementor-element.elementor-element-af4feee,
+.elementor-4304 .elementor-element.elementor-element-af4feee,
+.elementor-4305 .elementor-element.elementor-element-af4feee,
+.elementor-4306 .elementor-element.elementor-element-af4feee,
+.elementor-4307 .elementor-element.elementor-element-af4feee {
+  font-family: "futura light", Sans-serif !important;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 25px;
+  letter-spacing: 1.6px;
+  color: #0c0000;
+}
+
+/* Secondary safety net: any text-editor widget on a non-home, non-detail
+ * page that *doesn't* have a per-widget font-family override should fall
+ * back to "futura light" too. This catches stray paragraphs on pages like
+ * book-now where the WP authoring left the body text on the Elementor
+ * Roboto default.
+ *
+ * Doubled class boosts specificity to (0,2,0), which beats Elementor's
+ * framework default `.elementor-widget-text-editor` (0,1,0) but loses
+ * cleanly to any per-widget override at (0,3,0) — so widgets that were
+ * intentionally styled as Roboto/FUTURA MEDIUM (services labels, package
+ * FUTURA-MEDIUM headings, book-now form labels) keep their authored look. */
+.elementor-widget-text-editor.elementor-widget-text-editor {
+  font-family:
+    "futura light", var(--e-global-typography-text-font-family), Sans-serif;
+}
+
+/* =========================================================================
+ * Nav Bar Book Now Button Override
+ * Swaps colours from white fill/black text to black fill/white text.
+ * Targets any elementor-button in the header.
+ * ========================================================================= */
+header a.elementor-button,
+header a.elementor-button:hover {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+header a.elementor-button .elementor-button-text,
+header a.elementor-button:hover .elementor-button-text {
+  color: #fff !important;
+}
+
+/* =========================================================================
+ * BDT Accordion (FAQ) overrides for non-JS static site
+ * Adds manual toggle states that are triggered by site-runtime.js
+ * ========================================================================= */
+.bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-content {
+  display: grid !important;
+  grid-template-rows: 0fr;
+  padding: 0 !important;
+  opacity: 0;
+  transition: grid-template-rows 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+}
+.bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-content {
+  grid-template-rows: 1fr;
+  padding: 15px 0 !important;
+  opacity: 1;
+}
+.bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-content > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-icon-opened {
+  display: none !important;
+}
+.bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-icon-opened {
+  display: inline-block !important;
+}
+
+.bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-icon-closed {
+  display: inline-block !important;
+}
+.bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-icon-closed {
+  display: none !important;
+}
+
+.bdt-ep-accordion-title {
+  cursor: pointer !important;
+  user-select: none;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+/* Move the icon to the right so the question text aligns perfectly with the answer text on the left */
+.bdt-accordion .bdt-ep-accordion-icon {
+  order: 2 !important;
+  margin-left: 15px;
+}
+.bdt-accordion .bdt-ep-title-text {
+  order: 1 !important;
+  flex: 1;
+  text-align: left;
+}

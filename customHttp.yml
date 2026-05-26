@@ -1,0 +1,80 @@
+customHeaders:
+  # AWS Amplify (and any CloudFront-fronted host) serves files from /public via
+  # the CDN before the Next.js response pipeline runs, which means the
+  # `headers()` block in next.config.mjs never sees these requests. PageSpeed
+  # reported a 5s TTL on every asset for exactly this reason. This file
+  # restores long-cache + immutable on static assets and a sensible SWR window
+  # on HTML so first-paint stays snappy after a deploy.
+
+  - pattern: "/images/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=31536000, immutable"
+      - key: "Vary"
+        value: "Accept"
+
+  - pattern: "/fonts/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=31536000, immutable"
+      - key: "Access-Control-Allow-Origin"
+        value: "*"
+
+  - pattern: "/css/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=2592000"
+
+  - pattern: "/js/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=2592000"
+
+  - pattern: "/assets/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=31536000, immutable"
+
+  - pattern: "/_next/static/**"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=31536000, immutable"
+
+  - pattern: "/_next/image*"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=86400"
+
+  - pattern: "/favicon.ico"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=86400"
+
+  - pattern: "/og-image.jpg"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=31536000, immutable"
+
+  - pattern: "/site.webmanifest"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=86400"
+
+  # HTML pages — let the browser revalidate but cache at the edge for a day
+  # with stale-while-revalidate so a redeploy doesn't cause a thundering herd.
+  - pattern: "**/*.html"
+    headers:
+      - key: "Cache-Control"
+        value: "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
+
+  # Security headers — apply to all routes.
+  - pattern: "**/*"
+    headers:
+      - key: "X-Content-Type-Options"
+        value: "nosniff"
+      - key: "X-Frame-Options"
+        value: "SAMEORIGIN"
+      - key: "Referrer-Policy"
+        value: "strict-origin-when-cross-origin"
+      - key: "Permissions-Policy"
+        value: "camera=(), microphone=(), geolocation=()"

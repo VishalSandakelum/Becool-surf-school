@@ -1,0 +1,41 @@
+{
+  "name": "be-cool-surf-school",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "optimize:images": "node src/optimize-images.mjs",
+    "generate:webp": "node src/generate-webp.mjs",
+    "clean": "node -e \"['.next','node_modules/.cache','.swc','node_modules/.next-build-cache'].forEach(p=>{try{require('fs').rmSync(p,{recursive:true,force:true});console.log('rm',p)}catch(e){}})\"",
+    "dev:clean": "npm run clean && next dev",
+    "build:clean": "npm run clean && next build",
+    "refresh:content": "node src/extract.mjs && node src/import-external-images.mjs --rewrite && node src/rewrite-detail-links.mjs && node src/add-stay-packages.mjs && node src/add-home-teaser.mjs"
+  },
+  "dependencies": {
+    "next": "^14.2.32",
+    "nodemailer": "^8.0.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.10",
+    "@types/nodemailer": "^8.0.0",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "postcss": "^8.5.10",
+    "sharp": "^0.34.5",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.6.2"
+  },
+  "browserslist": [
+    "chrome >= 100",
+    "firefox >= 100",
+    "safari >= 15",
+    "edge >= 100",
+    "not dead"
+  ]
+}

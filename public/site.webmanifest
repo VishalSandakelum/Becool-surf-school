@@ -1,0 +1,15 @@
+{
+  "name": "Be Cool Surf School Weligama",
+  "short_name": "Be Cool Surf",
+  "description": "Sri Lanka's #1 surf school in Weligama Bay – ISA-certified instructors, surf lessons, surf camps, board rental and surf photography since 2013.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a3d62",
+  "lang": "en-LK",
+  "categories": ["sports", "travel", "lifestyle"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/apple-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
