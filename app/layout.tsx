@@ -3,7 +3,25 @@ import Script from "next/script";
 import { BUSINESS, KEYWORDS, SITE_URL } from "../src/seo";
 import { SiteStructuredData } from "../components/StructuredData";
 import ClientNavInterceptor from "../components/ClientNavInterceptor";
+import NavUnderline from "../components/NavUnderline";
 import "./globals.css";
+
+// Every per-page stylesheet we ship under public/css/. The order doesn't
+// matter — browsers fetch prefetch hints in parallel at low priority and
+// they all land in the HTTP cache before the user can click a nav link.
+const PREFETCH_ROUTES = [
+  "home",
+  "about",
+  "package",
+  "services",
+  "book-now",
+  "advanced-surf-lessons",
+  "beginner-surf-lessons",
+  "intermediate-surf-lesson",
+  "private-surfing-lessons",
+  "group-surfing-packages",
+  "board-rent",
+];
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -88,7 +106,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-LK">
+    /* suppressHydrationWarning on <html> silences the warning React emits
+       when browser extensions (QuillBot, MetaMask, Honey, etc.) inject
+       attributes on the document element before hydration runs. Scoped to
+       this one node so genuine hydration mismatches elsewhere still surface. */
+    <html lang="en-LK" suppressHydrationWarning>
       <head>
         <link rel="profile" href="https://gmpg.org/xfn/11" />
         <meta name="generator" content={BUSINESS.name} />
@@ -98,6 +120,21 @@ export default function RootLayout({
             preconnect to fonts.gstatic.com — PageSpeed flagged it as unused. */}
         <link rel="preconnect" href="https://becoolsrilanka.com" />
         <link rel="dns-prefetch" href="https://cdn.trustindex.io" />
+        {/* Prefetch every per-page stylesheet from the SSR <head>. Browsers
+            start fetching prefetch hints as soon as they parse them — far
+            earlier than any client-side requestIdleCallback. By the time a
+            user can click a nav link, every route's CSS is in HTTP cache,
+            so the destination page's blocking <link> resolves with zero RTT.
+            This eliminates the first-nav nav-bar FOUC where Elementor's
+            menu briefly stacked vertically before its layout CSS arrived. */}
+        {PREFETCH_ROUTES.map((slug) => (
+          <link
+            key={slug}
+            rel="prefetch"
+            as="style"
+            href={`/css/${slug}.css`}
+          />
+        ))}
         <SiteStructuredData />
         {/* Tiny native runtime that replaces the WordPress + Elementor + jQuery
             + Swiper bundle the original site shipped. Handles mobile menu,
@@ -105,10 +142,11 @@ export default function RootLayout({
             data-ep-wrapper-link clickable-card behaviour.
             The `?v=` query string busts the long-lived browser cache (30-day
             max-age on /js/*.js); bump it whenever the runtime changes. */}
-        <Script src="/js/site-runtime.js?v=8" strategy="afterInteractive" />
+        <Script src="/js/site-runtime.js?v=9" strategy="afterInteractive" />
       </head>
       <body>
         <ClientNavInterceptor />
+        <NavUnderline />
         {children}
       </body>
     </html>

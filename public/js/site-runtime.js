@@ -125,6 +125,12 @@
             // Override with inline `position: fixed`, anchored at the
             // toggle's bottom edge, full viewport width.
             var rect = btn.getBoundingClientRect();
+            // Clear any in-flight close timeout so an open + quick re-close
+            // doesn't strip styles partway through.
+            if (dropdown.__bcssCloseTimer) {
+              clearTimeout(dropdown.__bcssCloseTimer);
+              dropdown.__bcssCloseTimer = null;
+            }
             dropdown.style.position = "fixed";
             dropdown.style.top = rect.bottom + "px";
             dropdown.style.left = "0";
@@ -135,21 +141,32 @@
             dropdown.style.overflowY = "auto";
             dropdown.style.zIndex = "9997";
           } else {
-            // Clear only the properties we set so the closed-state CSS
-            // (max-height:0 + transform:scaleY(0)) animates back in.
-            [
-              "position",
-              "top",
-              "left",
-              "right",
-              "width",
-              "maxWidth",
-              "maxHeight",
-              "overflowY",
-              "zIndex",
-            ].forEach(function (p) {
-              dropdown.style[p] = "";
-            });
+            // Close animation — collapse straight up rather than snapping
+            // back to Elementor's default side-anchored coords (which would
+            // make the panel visibly slide off to the right before fading).
+            // Keep position/left/right/width while max-height transitions
+            // down; only clear positioning after the transition finishes.
+            dropdown.style.maxHeight = "0";
+            dropdown.style.overflowY = "hidden";
+            dropdown.__bcssCloseTimer = setTimeout(function () {
+              // Only clear if still closed (user might have re-opened).
+              if (!btn.classList.contains("elementor-active")) {
+                [
+                  "position",
+                  "top",
+                  "left",
+                  "right",
+                  "width",
+                  "maxWidth",
+                  "maxHeight",
+                  "overflowY",
+                  "zIndex",
+                ].forEach(function (p) {
+                  dropdown.style[p] = "";
+                });
+              }
+              dropdown.__bcssCloseTimer = null;
+            }, 380);
           }
         }
         document.body.classList.toggle("bcss-menu-open", willOpen);

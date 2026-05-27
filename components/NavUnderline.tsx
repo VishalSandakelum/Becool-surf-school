@@ -1,88 +1,161 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * Sliding active-page indicator for the nav menu.
+ * Sliding active-page indicator for the desktop header nav.
  *
- * Elementor's stock `e--pointer-underline` paints a per-item underline that
- * appears on hover and stays put under the active item. Switching pages just
- * fades one out and another in — there's no horizontal travel that signals
- * "this is the same indicator, moving."
+ * Earlier versions injected the underline as a child of the menu <ul>, but
+ * that <ul> lives inside the WordPress-imported HTML that PageShell drops
+ * via dangerouslySetInnerHTML — every soft nav rewrites the markup and
+ * destroys the underline. Without a persistent DOM node there's nothing for
+ * CSS transitions to interpolate against, so the slide always looked like a
+ * width-from-zero growth (left → right) regardless of direction.
  *
- * This component injects a single absolutely-positioned underline into each
- * `.elementor-nav-menu` <ul>, then on mount + on every pathname change
- * measures the active link's position and slides the underline to it via a
- * CSS transform transition. The pairing visually links the previous active
- * tab to the new one and matches the "smooth tab indicator" pattern users
- * recognise from Material / iOS tab bars.
+ * This version renders the underline as a React-owned `<span>` mounted in
+ * the root layout. The element survives every navigation; we just re-measure
+ * the active link on each pathname change and update fixed-position coords.
+ * Same DOM node + CSS transition = a real slide in both directions.
+ *
+ * Two subtle things this also handles:
+ *
+ *   1. **No grow-from-zero on first paint.** The CSS baseline has
+ *      `width: 0, transform: translate3d(0, 0, 0)`. The very first
+ *      measurement (initial mount) sets transition:none, applies the
+ *      target coords, forces a reflow, then re-enables transition — so
+ *      the underline appears at its starting tab with no animation. Every
+ *      subsequent change is a true slide from old to new.
+ *
+ *   2. **Robust re-measurement.** Stylesheet load, image decode, font
+ *      hinting and Elementor's own layout passes all settle at different
+ *      moments after a soft nav. A single rAF call sometimes catches the
+ *      active link mid-layout with width:0. We poll the position for
+ *      ~500 ms, attach a ResizeObserver to the nav, and listen for new
+ *      <link> load events — collectively that covers every settle path.
  */
 export default function NavUnderline() {
   const pathname = usePathname();
+  const underlineRef = useRef<HTMLSpanElement>(null);
+  const hasMeasuredRef = useRef(false);
 
   useEffect(() => {
-    function update() {
-      document
-        .querySelectorAll<HTMLUListElement>(".elementor-nav-menu")
-        .forEach((menu) => {
-          ensureUnderline(menu);
-          positionUnderline(menu);
-        });
+    const underline = underlineRef.current;
+    if (!underline) return;
+
+    let lastSig = "";
+
+    function applyTarget(rect: DOMRect, color: string, animate: boolean) {
+      if (!underline) return;
+      const left = rect.left;
+      const top = rect.bottom - 2;
+      const width = rect.width;
+      // Skip writes that wouldn't change anything — avoids restarting an
+      // in-flight transition with the same end state.
+      const sig = `${left.toFixed(1)},${top.toFixed(1)},${width.toFixed(1)},${color}`;
+      if (sig === lastSig) return;
+      lastSig = sig;
+
+      if (!animate) {
+        underline.style.transition = "none";
+      }
+      underline.style.background = color;
+      underline.style.opacity = "1";
+      underline.style.width = `${width}px`;
+      underline.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+      if (!animate) {
+        void underline.offsetWidth; // force a reflow before re-enabling
+        underline.style.transition = "";
+      }
     }
 
-    // rAF lets the new PageShell HTML mount + compute layout before we
-    // measure. Without it the first read after a client navigation can
-    // sometimes hit stale rects from the outgoing page.
-    const raf = requestAnimationFrame(update);
+    function update() {
+      if (!underline) return;
+      const active = pickActiveLink();
+      if (!active) {
+        underline.style.opacity = "0";
+        return;
+      }
+      const rect = active.getBoundingClientRect();
+      if (rect.width < 2) return; // mid-layout; wait for next tick
+      const color = getComputedStyle(active).color;
+      const animate = hasMeasuredRef.current;
+      applyTarget(rect, color, animate);
+      hasMeasuredRef.current = true;
+      document.body.classList.add("bcss-nav-enhanced");
+    }
 
-    window.addEventListener("resize", update);
+    // ── Aggressive re-measurement window after each pathname change ──
+    // For ~500 ms after a nav, things shift: per-page CSS finishes loading,
+    // fonts replace fallbacks, images decode. Re-measure every frame so
+    // the underline stays glued to the active link through all of it.
+    const start = performance.now();
+    let rafId = 0;
+    const tick = () => {
+      update();
+      if (performance.now() - start < 500) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+    rafId = requestAnimationFrame(tick);
+
+    // ── Persistent observers (until next pathname change unmounts them) ──
+    function onResize() {
+      update();
+    }
+    function onScroll() {
+      update();
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // ResizeObserver catches CSS-driven layout shifts on the nav itself
+    // (e.g. font-display swap, container query changes) that don't fire
+    // a window resize.
+    let resizeObserver: ResizeObserver | null = null;
+    const nav = document.querySelector(".elementor-nav-menu");
+    if (nav && typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => update());
+      resizeObserver.observe(nav);
+    }
+
+    // When any new stylesheet finishes loading, re-measure — covers the
+    // case where blocking CSS resolves AFTER our initial useEffect tick.
+    function onStylesheetLoad(e: Event) {
+      const t = e.target as HTMLElement | null;
+      if (t && t.tagName === "LINK") update();
+    }
+    document.addEventListener("load", onStylesheetLoad, true);
+
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", update);
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
+      resizeObserver?.disconnect();
+      document.removeEventListener("load", onStylesheetLoad, true);
     };
   }, [pathname]);
 
-  return null;
-}
-
-function ensureUnderline(menu: HTMLUListElement) {
-  if (menu.querySelector(":scope > .bcss-nav-underline")) return;
-  // The underline is absolute-positioned, so the menu needs a positioning
-  // context. Most Elementor menus are already `position: relative`, but
-  // promote any that aren't so the maths works either way.
-  if (getComputedStyle(menu).position === "static") {
-    menu.style.position = "relative";
-  }
-  const u = document.createElement("span");
-  u.className = "bcss-nav-underline";
-  u.setAttribute("aria-hidden", "true");
-  menu.appendChild(u);
-}
-
-function positionUnderline(menu: HTMLUListElement) {
-  const underline = menu.querySelector<HTMLSpanElement>(
-    ":scope > .bcss-nav-underline"
+  return (
+    <span
+      ref={underlineRef}
+      className="bcss-nav-underline"
+      aria-hidden="true"
+    />
   );
-  if (!underline) return;
+}
 
-  const active =
-    menu.querySelector<HTMLAnchorElement>(".elementor-item-active") ??
-    menu.querySelector<HTMLAnchorElement>('[aria-current="page"]');
-
-  if (!active) {
-    // No active item on this menu (e.g. dropdown variant on a page where
-    // none of its items match the route) — keep the underline hidden.
-    underline.style.opacity = "0";
-    return;
+/**
+ * Find the active link in the **visible** nav. The page renders both a
+ * desktop and a mobile-dropdown nav; pick whichever is visible so the
+ * indicator lands on the right element.
+ */
+function pickActiveLink(): HTMLAnchorElement | null {
+  const candidates = document.querySelectorAll<HTMLAnchorElement>(
+    ".elementor-nav-menu .elementor-item-active, .elementor-nav-menu [aria-current='page']"
+  );
+  for (const a of candidates) {
+    if (a.offsetParent !== null && a.offsetWidth > 0) return a;
   }
-
-  const menuRect = menu.getBoundingClientRect();
-  const linkRect = active.getBoundingClientRect();
-  const left = linkRect.left - menuRect.left;
-  const width = linkRect.width;
-
-  underline.style.opacity = "1";
-  underline.style.transform = `translate3d(${left}px, 0, 0)`;
-  underline.style.width = `${width}px`;
+  return null;
 }

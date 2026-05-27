@@ -7,6 +7,74 @@ html {
 }
 
 /* =========================================================================
+ * Page transition — intentionally NONE.
+ *
+ * Earlier iterations tried a template-level fade-up plus the native View
+ * Transitions API crossfade. Both made navigation feel staged ("slides in
+ * from below", "screenshot freezes then reveals") rather than seamless.
+ *
+ * The current approach is the native-app pattern: page content swaps
+ * instantly (CSS is prefetched and cached so there's no FOUC) and the
+ * sliding nav underline becomes the single, smooth visual cue that the
+ * route changed. Quietest, fastest, most app-like.
+ * ========================================================================= */
+
+/* =========================================================================
+ * Sliding nav underline — rendered by components/NavUnderline.tsx as a
+ * persistent React-owned element. Position is `fixed` so the underline isn't
+ * subject to the menu's coordinate system (the menu lives inside the
+ * dangerouslySetInnerHTML body which is rewritten on every soft nav).
+ *
+ * Translating instead of mutating top/left keeps the animation on the GPU
+ * compositor and survives the imported page's z-index stacking.
+ * ========================================================================= */
+.bcss-nav-underline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: #0a3d62;
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+  transform: translate3d(0, 0, 0);
+  /* Snappy ease-out: starts at full speed, decelerates into the new tab.
+     320ms hits the sweet spot — long enough to read as motion, short
+     enough that the next click feels responsive. */
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 200ms ease-out,
+    opacity 150ms ease-out;
+  will-change: transform, width;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcss-nav-underline {
+    transition: opacity 150ms ease-out;
+  }
+}
+
+/* Suppress Elementor's per-item underline only once NavUnderline has mounted
+   and positioned its replacement (it toggles body.bcss-nav-enhanced after
+   the first measure). Before that, and for no-JS visitors, Elementor's
+   native underline still draws so there's no bare-link state. */
+body.bcss-nav-enhanced .e--pointer-underline .elementor-item::before,
+body.bcss-nav-enhanced .e--pointer-underline .elementor-item::after,
+body.bcss-nav-enhanced .e--pointer-double-line .elementor-item::before,
+body.bcss-nav-enhanced .e--pointer-double-line .elementor-item::after {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcss-nav-underline {
+    transition: opacity 200ms ease-out;
+  }
+}
+
+/* =========================================================================
  * Brand @font-face declarations
  *
  * Why these live here (not just in the per-page bundles):
@@ -1520,4 +1588,359 @@ header a.elementor-button:hover .elementor-button-text {
   order: 1 !important;
   flex: 1;
   text-align: left;
+}
+
+/* =========================================================================
+ * Footer responsive overrides.
+ *
+ * The Elementor-exported footer renders fine at desktop widths but the per-
+ * page CSS hard-codes some odd sizing for the four columns: the parent
+ * container has `--padding-left:150px` (eats half the viewport on a phone),
+ * the FOLLOW US column sets `--width:500px` (wider than most tablet
+ * viewports), and Elementor's mobile flex-wrap leaves no useable layout
+ * for the social icons row — so on tablet/mobile the Instagram / Facebook /
+ * TikTok icons get pushed off-screen or clipped behind another column.
+ *
+ * Below scope is the footer template (`.elementor-location-footer` is set
+ * by Elementor on the <footer>), so nothing outside the footer is touched.
+ * ========================================================================= */
+
+@media (max-width: 1024px) {
+  /* Outer footer container — kill the giant left padding that pushed every
+     column past the viewport edge on tablets. */
+  .elementor-location-footer .elementor-element-a0b3af2 {
+    --padding-left: 24px !important;
+    --padding-right: 24px !important;
+    --padding-top: 50px !important;
+    --padding-bottom: 30px !important;
+    --flex-wrap: wrap !important;
+    --gap: 32px !important;
+    --row-gap: 32px !important;
+    --column-gap: 32px !important;
+    flex-wrap: wrap !important;
+    gap: 32px !important;
+  }
+  /* Four columns become two on tablet so each has real estate again. */
+  .elementor-location-footer .elementor-element-065bbe3,
+  .elementor-location-footer .elementor-element-58dd918,
+  .elementor-location-footer .elementor-element-c21b083,
+  .elementor-location-footer .elementor-element-461f85f {
+    --width: calc(50% - 16px) !important;
+    width: calc(50% - 16px) !important;
+    flex: 0 0 calc(50% - 16px) !important;
+    min-width: 0 !important;
+    --padding-left: 0 !important;
+    --padding-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* On phones the four columns stack vertically; we also center them so
+     the FOLLOW US heading and social icons sit visually balanced. */
+  .elementor-location-footer .elementor-element-a0b3af2 {
+    --padding-left: 20px !important;
+    --padding-right: 20px !important;
+    --gap: 28px !important;
+    --row-gap: 28px !important;
+    gap: 28px !important;
+  }
+  .elementor-location-footer .elementor-element-065bbe3,
+  .elementor-location-footer .elementor-element-58dd918,
+  .elementor-location-footer .elementor-element-c21b083,
+  .elementor-location-footer .elementor-element-461f85f {
+    --width: 100% !important;
+    width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+}
+
+/* The social icons widget hard-codes `--grid-template-columns:repeat(3, auto)`
+   which works horizontally on desktop, but combined with the FOLLOW US
+   column's odd width can clip on small screens. Force the grid to honour
+   available space and stay left-aligned. */
+@media (max-width: 1024px) {
+  .elementor-location-footer .elementor-element-9b5e7c8 {
+    --grid-template-columns: repeat(3, max-content) !important;
+    --grid-column-gap: 12px !important;
+    --grid-row-gap: 12px !important;
+  }
+  /* The widget's outer container had no top padding for 15px icons; with
+     40px touch targets the icons need breathing room above so the top of
+     the circle isn't visually clipped against the section divider above. */
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-widget-container {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    overflow: visible !important;
+  }
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-social-icons-wrapper {
+    overflow: visible !important;
+    line-height: 1 !important;
+  }
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, max-content) !important;
+    gap: 12px !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    line-height: 1 !important;
+  }
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-grid-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    overflow: visible !important;
+  }
+  /* Make the icons themselves larger and tappable on touch screens — the
+     desktop 15px icons are too small to comfortably hit with a finger. */
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-social-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 18px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+  }
+  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-social-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: block !important;
+  }
+}
+
+/* The bottom strip (the line + copyright row) sometimes overflows on mobile
+   because Elementor sets a wide internal padding. Keep it within the
+   viewport. */
+@media (max-width: 1024px) {
+  .elementor-location-footer .elementor-element-203a3e3,
+  .elementor-location-footer .elementor-element-a1ee137 {
+    --padding-left: 24px !important;
+    --padding-right: 24px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}
+
+/* =========================================================================
+ * Header / nav-bar responsive polish.
+ *
+ * Scope: `.elementor-location-header` ancestor — desktop layout, links,
+ * underline animation and route behaviour are NOT touched here. These rules
+ * only kick in on tablet (≤1024 px) and phone (≤640 px) widths.
+ *
+ * What this fixes:
+ *   - Header bar padding/height was uneven on narrow screens; logo and
+ *     burger sometimes touched the viewport edge.
+ *   - The 15px desktop burger icon is too small for a finger tap.
+ *   - The mobile dropdown menu inherited 5px line-height + tiny font from
+ *     the desktop horizontal menu — items overlapped and were hard to tap.
+ *   - No visual indicator for the active page inside the mobile dropdown
+ *     (the sliding NavUnderline only lives on the desktop horizontal nav).
+ *   - "Book Now" pill in the mobile header used the desktop button sizing
+ *     and overflowed the row at the smallest widths.
+ * ========================================================================= */
+
+@media (max-width: 1024px) {
+  /* Outer fixed header bar — tighter, predictable padding so the row sits
+     neatly inside the viewport at every tablet/phone width. */
+  .elementor-location-header .elementor-element-e5f472c {
+    --padding-top: 10px !important;
+    --padding-bottom: 10px !important;
+    --padding-left: 20px !important;
+    --padding-right: 20px !important;
+    --gap: 12px !important;
+    --column-gap: 12px !important;
+    align-items: center !important;
+  }
+
+  /* Logo column — let the brand text breathe but keep it from dominating
+     the row. */
+  .elementor-location-header .elementor-element-282bc31 {
+    --padding-left: 0 !important;
+    --padding-right: 0 !important;
+    flex: 0 1 auto !important;
+  }
+  .elementor-location-header .elementor-element-282bc31
+    .elementor-heading-title {
+    font-size: 32px !important;
+    line-height: 1 !important;
+  }
+
+  /* Mobile-only Book Now button — keep it visible next to the burger but
+     compact so the row never wraps. */
+  .elementor-location-header .elementor-element-c1669d7 {
+    --padding-left: 0 !important;
+    --padding-right: 0 !important;
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+  }
+  .elementor-location-header .elementor-element-c1669d7 .elementor-button {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Nav widget column — keep it compact (it only carries the burger button
+     on this breakpoint; the horizontal <ul> is display:none from Elementor's
+     own dropdown-tablet rule). */
+  .elementor-location-header .elementor-element-f0a5788 {
+    flex: 0 0 auto !important;
+    --padding-left: 0 !important;
+    --padding-right: 0 !important;
+  }
+  .elementor-location-header .elementor-element-2012b8e {
+    width: auto !important;
+    max-width: none !important;
+    --container-widget-width: auto !important;
+  }
+
+  /* Burger toggle — 44x44 minimum tap target, brand colour, smooth state. */
+  .elementor-location-header .elementor-menu-toggle {
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: #0a3d62 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition:
+      background-color 200ms ease,
+      transform 200ms ease;
+  }
+  .elementor-location-header .elementor-menu-toggle:hover,
+  .elementor-location-header .elementor-menu-toggle:focus-visible {
+    background: rgba(10, 61, 98, 0.08) !important;
+  }
+  .elementor-location-header .elementor-menu-toggle.elementor-active {
+    background: #0a3d62 !important;
+    color: #ffffff !important;
+  }
+  .elementor-location-header .elementor-menu-toggle svg {
+    width: 22px !important;
+    height: 22px !important;
+    fill: currentColor !important;
+  }
+
+  /* ── Mobile dropdown panel ──────────────────────────────────────────── */
+  /* site-runtime.js sets position:fixed + top/left/right/width inline when
+     the menu opens, so we just style the look here. The max-height
+     transition is what drives the open/close slide — the JS animates
+     max-height from `calc(100vh - top)` (open) down to `0` (closing) and
+     this rule turns that height change into a smooth in-place collapse,
+     never letting Elementor's default side-anchored layout slip through
+     between the two states. */
+  .elementor-location-header .elementor-nav-menu--dropdown {
+    background: #ffffff !important;
+    box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.18) !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+    padding: 8px 0 12px 0 !important;
+    transition:
+      max-height 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 280ms ease-out !important;
+    /* Don't fight Elementor's default `transform: scaleY(0)` here — that
+       transform is what keeps the closed dropdown invisible (and stops its
+       padded white strip from drifting over the burger icon). We override
+       transform ONLY when the paired toggle button is .elementor-active. */
+  }
+  /* Open state — burger toggle is active, so let the dropdown render its
+     natural transform and become visible. */
+  .elementor-location-header .elementor-menu-toggle.elementor-active
+    + .elementor-nav-menu--dropdown {
+    transform: none !important;
+  }
+  .elementor-location-header .elementor-nav-menu--dropdown .elementor-nav-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+  }
+  .elementor-location-header .elementor-nav-menu--dropdown
+    .elementor-nav-menu > li {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .elementor-location-header .elementor-nav-menu--dropdown .elementor-item {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 52px !important;
+    padding: 14px 24px !important;
+    font-family: "FUTURA MEDIUM", "Maven Pro", sans-serif !important;
+    font-size: 17px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.6px !important;
+    color: #0a3d62 !important;
+    background: transparent !important;
+    border: none !important;
+    border-left: 3px solid transparent !important;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      padding-left 180ms ease;
+  }
+  .elementor-location-header .elementor-nav-menu--dropdown .elementor-item:hover,
+  .elementor-location-header .elementor-nav-menu--dropdown
+    .elementor-item:focus-visible {
+    background: rgba(10, 61, 98, 0.06) !important;
+    padding-left: 30px !important;
+  }
+  /* Active page — accent bar + slightly bolder text so the user knows where
+     they are even though the desktop sliding underline isn't visible here. */
+  .elementor-location-header .elementor-nav-menu--dropdown
+    .elementor-item-active,
+  .elementor-location-header .elementor-nav-menu--dropdown
+    .elementor-item[aria-current="page"] {
+    background: rgba(10, 61, 98, 0.06) !important;
+    border-left-color: #fbbf24 !important;
+    color: #0a3d62 !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* Phone breakpoint — tighter row padding so the logo + book-now + burger
+   row still fits comfortably on a 360px viewport. */
+@media (max-width: 640px) {
+  .elementor-location-header .elementor-element-e5f472c {
+    --padding-left: 14px !important;
+    --padding-right: 14px !important;
+    --gap: 8px !important;
+    --column-gap: 8px !important;
+  }
+  .elementor-location-header .elementor-element-282bc31
+    .elementor-heading-title {
+    font-size: 26px !important;
+  }
+  .elementor-location-header .elementor-element-c1669d7 .elementor-button {
+    padding: 7px 12px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+  .elementor-location-header .elementor-nav-menu--dropdown .elementor-item {
+    font-size: 16px !important;
+    padding: 13px 20px !important;
+    min-height: 48px !important;
+  }
+}
+
+/* On phone, hide the sliding desktop underline — the mobile dropdown has its
+   own active-state styling (the accent bar) so the fixed-position underline
+   would otherwise hover over the screen with no visible target. */
+@media (max-width: 1024px) {
+  .bcss-nav-underline {
+    display: none !important;
+  }
 }

@@ -115,33 +115,24 @@ export default function PageShell({
           }}
         />
       )}
-      {/* Render-blocking CSS becomes the LCP bottleneck (PageSpeed flagged a
-          1.8s block on /css/home.css). We load the per-page bundle with
-          media="print" so it downloads in parallel without blocking first
-          paint, then a tiny inline script swaps media to "all" once it's
-          ready. <noscript> falls back to a normal blocking <link> when JS is
-          disabled. The brand reset in app/globals.css keeps first paint
-          readable while this file is in flight. */}
+      {/* Per-page CSS, blocking. We tried the `media="print"` + JS-swap
+          pattern to dodge PageSpeed's render-block warning, but on SPA
+          navigation React inserts the swap <script> via DOM mutation and
+          browsers refuse to execute scripts created that way — so the new
+          page painted unstyled for ~300 ms until the load event eventually
+          fired in useEffect. The blocking <link> brings predictable styling
+          back; nav-target CSS is prefetched on idle and on hover (see
+          ClientNavInterceptor), so by the time a user clicks a nav link the
+          file is already in the HTTP cache and the "blocking" cost is zero
+          bytes over the wire. The <link rel="preload"> below kicks off
+          the parallel download on the very first page load. */}
       <link
         rel="preload"
         href={`/css/${slug}.css`}
         as="style"
         fetchPriority="high"
       />
-      <link
-        rel="stylesheet"
-        href={`/css/${slug}.css`}
-        media="print"
-        data-bcss-css={slug}
-      />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `(function(){var l=document.querySelector('link[data-bcss-css="${slug}"]');if(!l)return;function swap(){l.media='all'}if(l.sheet){swap()}else{l.addEventListener('load',swap,{once:true})}})();`,
-        }}
-      />
-      <noscript>
-        <link rel="stylesheet" href={`/css/${slug}.css`} />
-      </noscript>
+      <link rel="stylesheet" href={`/css/${slug}.css`} />
       <BodyClass className={meta.bodyClass} />
       <HtmlContent html={finalHtml} />
       {Object.entries(clientSlots).map(([name, node]) => (
