@@ -698,6 +698,23 @@
               font-family: "Maven Pro", "Roboto", sans-serif;
             }
 
+            /* Tighten the gap below this section on tablet/phone. Desktop
+               value (140px margin + 80px padding) reads as generous breathing
+               room on a wide layout but feels like a dead zone on narrower
+               screens where every screen-height of scrolling counts. */
+            @media (max-width: 1024px) {
+              .bcss-features-wrap {
+                padding-bottom: 40px;
+                margin-bottom: 60px;
+              }
+            }
+            @media (max-width: 640px) {
+              .bcss-features-wrap {
+                padding-bottom: 30px;
+                margin-bottom: 40px;
+              }
+            }
+
             .bcss-features-grid {
               display: grid;
               grid-template-columns: 1fr;

@@ -1544,7 +1544,10 @@ header a.elementor-button:hover .elementor-button-text {
   grid-template-rows: 0fr;
   padding: 0 !important;
   opacity: 0;
-  transition: grid-template-rows 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+  transition:
+    grid-template-rows 0.3s ease,
+    opacity 0.3s ease,
+    padding 0.3s ease;
   overflow: hidden;
 }
 .bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-content {
@@ -1560,14 +1563,18 @@ header a.elementor-button:hover .elementor-button-text {
 .bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-icon-opened {
   display: none !important;
 }
-.bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-icon-opened {
+.bdt-accordion
+  .bdt-ep-accordion-item.bcss-is-open
+  .bdt-ep-accordion-icon-opened {
   display: inline-block !important;
 }
 
 .bdt-accordion .bdt-ep-accordion-item .bdt-ep-accordion-icon-closed {
   display: inline-block !important;
 }
-.bdt-accordion .bdt-ep-accordion-item.bcss-is-open .bdt-ep-accordion-icon-closed {
+.bdt-accordion
+  .bdt-ep-accordion-item.bcss-is-open
+  .bdt-ep-accordion-icon-closed {
   display: none !important;
 }
 
@@ -1669,12 +1676,16 @@ header a.elementor-button:hover .elementor-button-text {
   /* The widget's outer container had no top padding for 15px icons; with
      40px touch targets the icons need breathing room above so the top of
      the circle isn't visually clipped against the section divider above. */
-  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-widget-container {
+  .elementor-location-footer
+    .elementor-element-9b5e7c8
+    .elementor-widget-container {
     padding-top: 12px !important;
     padding-bottom: 12px !important;
     overflow: visible !important;
   }
-  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-social-icons-wrapper {
+  .elementor-location-footer
+    .elementor-element-9b5e7c8
+    .elementor-social-icons-wrapper {
     overflow: visible !important;
     line-height: 1 !important;
   }
@@ -1705,7 +1716,10 @@ header a.elementor-button:hover .elementor-button-text {
     line-height: 1 !important;
     vertical-align: middle !important;
   }
-  .elementor-location-footer .elementor-element-9b5e7c8 .elementor-social-icon svg {
+  .elementor-location-footer
+    .elementor-element-9b5e7c8
+    .elementor-social-icon
+    svg {
     width: 18px !important;
     height: 18px !important;
     display: block !important;
@@ -1764,7 +1778,8 @@ header a.elementor-button:hover .elementor-button-text {
     --padding-right: 0 !important;
     flex: 0 1 auto !important;
   }
-  .elementor-location-header .elementor-element-282bc31
+  .elementor-location-header
+    .elementor-element-282bc31
     .elementor-heading-title {
     font-size: 32px !important;
     line-height: 1 !important;
@@ -1853,7 +1868,8 @@ header a.elementor-button:hover .elementor-button-text {
   }
   /* Open state — burger toggle is active, so let the dropdown render its
      natural transform and become visible. */
-  .elementor-location-header .elementor-menu-toggle.elementor-active
+  .elementor-location-header
+    .elementor-menu-toggle.elementor-active
     + .elementor-nav-menu--dropdown {
     transform: none !important;
   }
@@ -1865,8 +1881,10 @@ header a.elementor-button:hover .elementor-button-text {
     padding: 0 !important;
     list-style: none !important;
   }
-  .elementor-location-header .elementor-nav-menu--dropdown
-    .elementor-nav-menu > li {
+  .elementor-location-header
+    .elementor-nav-menu--dropdown
+    .elementor-nav-menu
+    > li {
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1892,17 +1910,22 @@ header a.elementor-button:hover .elementor-button-text {
       color 180ms ease,
       padding-left 180ms ease;
   }
-  .elementor-location-header .elementor-nav-menu--dropdown .elementor-item:hover,
-  .elementor-location-header .elementor-nav-menu--dropdown
+  .elementor-location-header
+    .elementor-nav-menu--dropdown
+    .elementor-item:hover,
+  .elementor-location-header
+    .elementor-nav-menu--dropdown
     .elementor-item:focus-visible {
     background: rgba(10, 61, 98, 0.06) !important;
     padding-left: 30px !important;
   }
   /* Active page — accent bar + slightly bolder text so the user knows where
      they are even though the desktop sliding underline isn't visible here. */
-  .elementor-location-header .elementor-nav-menu--dropdown
+  .elementor-location-header
+    .elementor-nav-menu--dropdown
     .elementor-item-active,
-  .elementor-location-header .elementor-nav-menu--dropdown
+  .elementor-location-header
+    .elementor-nav-menu--dropdown
     .elementor-item[aria-current="page"] {
     background: rgba(10, 61, 98, 0.06) !important;
     border-left-color: #fbbf24 !important;
@@ -1920,7 +1943,8 @@ header a.elementor-button:hover .elementor-button-text {
     --gap: 8px !important;
     --column-gap: 8px !important;
   }
-  .elementor-location-header .elementor-element-282bc31
+  .elementor-location-header
+    .elementor-element-282bc31
     .elementor-heading-title {
     font-size: 26px !important;
   }
@@ -1942,5 +1966,61 @@ header a.elementor-button:hover .elementor-button-text {
 @media (max-width: 1024px) {
   .bcss-nav-underline {
     display: none !important;
+  }
+}
+
+/* =========================================================================
+ * Home page — reduce the huge gap between the "Beyond Surf Lessons" feature
+ * cards and the "CAMP REVIEWS FROM GUESTS" section on tablet & mobile.
+ *
+ * Cause: home.css gives `.elementor-element-01250b0` (the CAMP REVIEWS
+ * container) a `--margin-top: 402px` at ≤1024px and `--margin-top: 300px`
+ * at ≤400px. On a tablet/phone screen that's an entire screen of empty
+ * white. Override the custom property AND the resolved physical/logical
+ * properties so whichever the browser picks, it gets the small value.
+ *
+ * Selector chain (`.elementor.elementor-3112 .elementor-element.elementor
+ * -element-01250b0.e-con`) matches Elementor's own per-page CSS specificity
+ * (4 classes), then `!important` puts it over the top. Desktop unaffected
+ * because the rule lives only inside the tablet/phone media queries.
+ * ========================================================================= */
+@media (max-width: 1024px) {
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0,
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0.e-con,
+  .elementor-element.elementor-element-01250b0.e-con-full {
+    --margin-top: 110px !important;
+    --padding-top: 30px !important;
+    margin-top: 110px !important;
+    margin-block-start: 110px !important;
+    padding-top: 30px !important;
+    padding-block-start: 30px !important;
+  }
+}
+@media (max-width: 640px) {
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0,
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0.e-con,
+  .elementor-element.elementor-element-01250b0.e-con-full {
+    --margin-top: 130px !important;
+    --padding-top: 32px !important;
+    margin-top: 130px !important;
+    margin-block-start: 130px !important;
+    padding-top: 32px !important;
+    padding-block-start: 32px !important;
+  }
+}
+/* Small phones (≤425px) — feature cards stack to a single column and there's
+   no overflowing "01..04" outline number to clear (it stays inside the card's
+   own padding at this width), so the gap can collapse back down to a normal
+   section break. */
+@media (max-width: 425px) {
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0,
+  .elementor.elementor-3112 .elementor-element.elementor-element-01250b0.e-con,
+  .elementor-element.elementor-element-01250b0.e-con-full {
+    --margin-top: 24px !important;
+    --padding-top: 14px !important;
+    margin-top: 24px !important;
+    margin-block-start: 24px !important;
+    padding-top: 14px !important;
+    padding-block-start: 14px !important;
   }
 }
