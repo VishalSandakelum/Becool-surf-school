@@ -6,21 +6,20 @@ import ClientNavInterceptor from "../components/ClientNavInterceptor";
 import NavUnderline from "../components/NavUnderline";
 import "./globals.css";
 
-// Every per-page stylesheet we ship under public/css/. The order doesn't
-// matter — browsers fetch prefetch hints in parallel at low priority and
-// they all land in the HTTP cache before the user can click a nav link.
+// Routes a user is most likely to click from the persistent header nav:
+// home, about, packages, services, contact (book-now). We only SSR-prefetch
+// these five — the deeper service-detail routes (advanced-surf-lessons,
+// beginner-surf-lessons, etc.) are prefetched later, on idle, by
+// ClientNavInterceptor.useEffect. Trimming the head from 11 hints to 5
+// drops ~600 KB of low-priority network activity on the first page load
+// (PageSpeed flagged the total payload at ~2.9 MB), without changing
+// nav-click responsiveness — the header buttons remain instant. */
 const PREFETCH_ROUTES = [
   "home",
   "about",
   "package",
   "services",
   "book-now",
-  "advanced-surf-lessons",
-  "beginner-surf-lessons",
-  "intermediate-surf-lesson",
-  "private-surfing-lessons",
-  "group-surfing-packages",
-  "board-rent",
 ];
 
 export const metadata: Metadata = {

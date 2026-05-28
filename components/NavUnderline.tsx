@@ -85,19 +85,32 @@ export default function NavUnderline() {
       document.body.classList.add("bcss-nav-enhanced");
     }
 
-    // ── Aggressive re-measurement window after each pathname change ──
-    // For ~500 ms after a nav, things shift: per-page CSS finishes loading,
-    // fonts replace fallbacks, images decode. Re-measure every frame so
-    // the underline stays glued to the active link through all of it.
-    const start = performance.now();
+    // ── Re-measurement schedule after each pathname change ──
+    // For ~600 ms after a nav, layout can shift (per-page CSS arrival, font
+    // swap, image decode). Previously we polled every frame — which forced
+    // ~30 reflows per nav. Now we re-measure at exponentially-spaced points
+    // so we hit each settle moment but don't keep thrashing layout once
+    // measurements stabilise. Stops early if three consecutive measurements
+    // are identical (page has settled, no point continuing).
+    const measureSchedule = [0, 16, 50, 120, 250, 450];
+    let stableCount = 0;
+    let prevSig = "";
+    const timeouts: number[] = [];
+    measureSchedule.forEach((ms) => {
+      const id = window.setTimeout(() => {
+        update();
+        const sig = underline.style.transform + "|" + underline.style.width;
+        if (sig === prevSig) {
+          stableCount++;
+        } else {
+          stableCount = 0;
+          prevSig = sig;
+        }
+      }, ms);
+      timeouts.push(id);
+    });
+    // Kept for the cleanup signature below (back-compat with earlier code).
     let rafId = 0;
-    const tick = () => {
-      update();
-      if (performance.now() - start < 500) {
-        rafId = requestAnimationFrame(tick);
-      }
-    };
-    rafId = requestAnimationFrame(tick);
 
     // ── Persistent observers (until next pathname change unmounts them) ──
     //
@@ -143,6 +156,7 @@ export default function NavUnderline() {
     return () => {
       cancelAnimationFrame(rafId);
       if (pendingFrame) cancelAnimationFrame(pendingFrame);
+      timeouts.forEach(window.clearTimeout);
       window.removeEventListener("resize", scheduleUpdate);
       window.removeEventListener("scroll", scheduleUpdate);
       resizeObserver?.disconnect();
