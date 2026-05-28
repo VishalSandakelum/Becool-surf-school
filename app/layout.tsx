@@ -114,12 +114,38 @@ export default function RootLayout({
       <head>
         <link rel="profile" href="https://gmpg.org/xfn/11" />
         <meta name="generator" content={BUSINESS.name} />
-        {/* Preconnect to own origin so the slideshow / hero background image
-            socket is warm when Elementor's inline `data-settings` JSON kicks
-            off the request. Fonts are self-hosted from /public/fonts, so no
-            preconnect to fonts.gstatic.com — PageSpeed flagged it as unused. */}
-        <link rel="preconnect" href="https://becoolsrilanka.com" />
+        {/* PageSpeed flagged the becoolsrilanka.com preconnect as "unused"
+            on the Amplify deploy — the actual assets live at the Amplify
+            origin, not becoolsrilanka.com. Dropped. The trustindex DNS
+            prefetch is kept because the reviews widget calls it. */}
         <link rel="dns-prefetch" href="https://cdn.trustindex.io" />
+        {/* Preload brand fonts that paint above the fold (the JOLLY JINGLE
+            logo and the FUTURA MEDIUM hero text). Without these the browser
+            doesn't discover the @font-face URLs until home.css finishes
+            parsing — PageSpeed measured 533 ms wait for the first font
+            request. Preload pulls them onto the network during the initial
+            HTML parse so they arrive in parallel with the CSS itself. */}
+        <link
+          rel="preload"
+          href="/fonts/JollyJingle.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/FuturaCyrillicMedium.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/FuturaCyrillicLight-1.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
         {/* Prefetch every per-page stylesheet from the SSR <head>. Browsers
             start fetching prefetch hints as soon as they parse them — far
             earlier than any client-side requestIdleCallback. By the time a
@@ -142,7 +168,7 @@ export default function RootLayout({
             data-ep-wrapper-link clickable-card behaviour.
             The `?v=` query string busts the long-lived browser cache (30-day
             max-age on /js/*.js); bump it whenever the runtime changes. */}
-        <Script src="/js/site-runtime.js?v=9" strategy="afterInteractive" />
+        <Script src="/js/site-runtime.min.js?v=10" strategy="afterInteractive" />
       </head>
       <body>
         <ClientNavInterceptor />

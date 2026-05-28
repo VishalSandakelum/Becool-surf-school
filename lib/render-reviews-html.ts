@@ -59,7 +59,7 @@ function stars(value: number): string {
     const cls = i < filled ? "bcss-star bcss-star--on" : "bcss-star bcss-star--off";
     cells.push(`<span class="${cls}" aria-hidden="true">★</span>`);
   }
-  return `<span class="bcss-stars" aria-label="${value} out of 5">${cells.join(
+  return `<span class="bcss-stars" role="img" aria-label="${value} out of 5">${cells.join(
     ""
   )}</span>`;
 }

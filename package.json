@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node src/minify-runtime.mjs && next build",
     "start": "next start",
+    "minify:runtime": "node src/minify-runtime.mjs",
     "lint": "next lint",
     "optimize:images": "node src/optimize-images.mjs",
     "generate:webp": "node src/generate-webp.mjs",

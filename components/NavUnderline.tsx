@@ -100,14 +100,27 @@ export default function NavUnderline() {
     rafId = requestAnimationFrame(tick);
 
     // ── Persistent observers (until next pathname change unmounts them) ──
-    function onResize() {
-      update();
+    //
+    // Every call to update() reads the active link's bounding rect *and*
+    // its computed style, then writes back to the underline. If we call
+    // update() directly inside scroll / resize handlers, the browser can
+    // be forced to recompute layout dozens of times per second — PageSpeed
+    // attributed 76 ms of forced reflow to this loop on first paint.
+    //
+    // Coalescing through requestAnimationFrame collapses bursts of events
+    // (e.g. a single inertia scroll fires hundreds of `scroll` events) into
+    // one read-then-write per frame, eliminating the thrash.
+    let pendingFrame = 0;
+    function scheduleUpdate() {
+      if (pendingFrame) return;
+      pendingFrame = requestAnimationFrame(() => {
+        pendingFrame = 0;
+        update();
+      });
     }
-    function onScroll() {
-      update();
-    }
-    window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", onScroll, { passive: true });
+
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
 
     // ResizeObserver catches CSS-driven layout shifts on the nav itself
     // (e.g. font-display swap, container query changes) that don't fire
@@ -115,7 +128,7 @@ export default function NavUnderline() {
     let resizeObserver: ResizeObserver | null = null;
     const nav = document.querySelector(".elementor-nav-menu");
     if (nav && typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(() => update());
+      resizeObserver = new ResizeObserver(scheduleUpdate);
       resizeObserver.observe(nav);
     }
 
@@ -123,14 +136,15 @@ export default function NavUnderline() {
     // case where blocking CSS resolves AFTER our initial useEffect tick.
     function onStylesheetLoad(e: Event) {
       const t = e.target as HTMLElement | null;
-      if (t && t.tagName === "LINK") update();
+      if (t && t.tagName === "LINK") scheduleUpdate();
     }
     document.addEventListener("load", onStylesheetLoad, true);
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onScroll);
+      if (pendingFrame) cancelAnimationFrame(pendingFrame);
+      window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("scroll", scheduleUpdate);
       resizeObserver?.disconnect();
       document.removeEventListener("load", onStylesheetLoad, true);
     };

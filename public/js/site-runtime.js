@@ -382,8 +382,42 @@
       el.dataset.bcssBound = "1";
       el.setAttribute("role", "link");
       el.setAttribute("tabindex", "0");
+      // The element is a clickable container with role="link" but no
+      // visible text content — Lighthouse flags it as a button/link
+      // without an accessible name. Derive one from the destination URL
+      // (e.g. "Open instagram.com link") so screen readers announce
+      // something meaningful, falling back to "Open external link" when
+      // the URL can't be parsed.
+      if (!el.hasAttribute("aria-label")) {
+        var label = deriveLinkLabel(el);
+        if (label) el.setAttribute("aria-label", label);
+      }
       if (!el.style.cursor) el.style.cursor = "pointer";
     });
+  }
+
+  function deriveLinkLabel(el) {
+    var settings = parseSettings(el.getAttribute("data-ep-wrapper-link"));
+    var raw = settings && settings.url;
+    if (!raw) return "";
+    try {
+      var u = new URL(String(raw), window.location.href);
+      var host = u.hostname.replace(/^www\./, "");
+      // For known social hosts, name the platform so the announcement is
+      // even clearer ("Open Instagram" reads better than "Open instagram.com").
+      var brand =
+        host.indexOf("instagram.") === 0
+          ? "Instagram"
+          : host.indexOf("facebook.") === 0
+            ? "Facebook"
+            : host.indexOf("tiktok.") === 0
+              ? "TikTok"
+              : null;
+      if (brand) return "Open " + brand;
+      return "Open " + host;
+    } catch (e) {
+      return "Open external link";
+    }
   }
 
   function resolveHref(wrapper) {
